@@ -1,1 +1,3 @@
 package cloudera
+
+func GetMetrics()
