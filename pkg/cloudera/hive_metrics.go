@@ -46,7 +46,7 @@ type ClouderaTimeSeries struct {
 	} `json:"items"`
 }
 
-func (cloudera *Cloudera) GetHiveMetastoreOpenConnectionMetrics() string {
+func (cloudera *Cloudera) GetHiveMetastoreOpenConnectionMetrics() float64 {
 	now := time.Now().Format(time.RFC3339)
 	count := 15
 	from := time.Now().Add(time.Duration(-count) * time.Minute).Format(time.RFC3339)
@@ -61,7 +61,7 @@ func (cloudera *Cloudera) GetHiveMetastoreOpenConnectionMetrics() string {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return "err"
+		return float64(0)
 	}
 
 	defer resp.Body.Close()
@@ -71,15 +71,23 @@ func (cloudera *Cloudera) GetHiveMetastoreOpenConnectionMetrics() string {
 	jsonErr := json.Unmarshal(body, &clouderaTimeSeries)
 
 	if jsonErr != nil {
-		return "err"
+		return float64(0)
 	}
+
+	points := []float64{}
 	for _, item := range clouderaTimeSeries.Items {
 		for _, timeserie := range item.TimeSeries {
 			for _, datai := range timeserie.Data {
 				data, _ := datai.(map[string]interface{})
-				fmt.Println(data["value"])
+				points = append(points, data["value"].(float64))
 			}
 		}
 	}
-	return "ok"
+
+	sum := float64(0)
+
+	for point := range points {
+		sum = sum + float64(point)
+	}
+	return sum / float64(len(points))
 }
