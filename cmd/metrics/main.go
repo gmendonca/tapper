@@ -18,4 +18,6 @@ func main() {
 	}
 
 	fmt.Println(c.GetURL())
+
+	fmt.Println(c.GetHiveMetastoreOpenConnectionMetrics())
 }
