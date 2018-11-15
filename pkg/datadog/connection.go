@@ -1,24 +1,15 @@
 package datadog
 
 import (
-	"fmt"
-	"strconv"
+	datadogClient "gopkg.in/zorkian/go-datadog-api.v2"
 )
 
 type Datadog struct {
-	Host     string
-	Port     int
-	Username string
-	Password string
-	SSL      bool
+	ApiKey        string
+	ApplicationId string
 }
 
-func (datadog *Datadog) PostMetric)
-
-func (datadog *Datadog) GetURL() string {
-	protocol := "http"
-	if datadog.SSL {
-		protocol = "https"
-	}
-	return fmt.Sprintf("%s://%s:%s", protocol, datadog.Host, strconv.Itoa(datadog.Port))
+func (datadog *Datadog) GetClient() *datadogClient.Client {
+	client := datadogClient.NewClient(datadog.ApiKey, datadog.ApplicationId)
+	return client
 }
