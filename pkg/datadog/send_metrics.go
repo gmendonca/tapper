@@ -1,7 +1,6 @@
 package datadog
 
 import (
-	"fmt"
 	"time"
 
 	datadogClient "gopkg.in/zorkian/go-datadog-api.v2"
@@ -9,10 +8,10 @@ import (
 
 //
 func (datadog *Datadog) PostMetrics(metricName string, point float64, hostname string, metricType string, tags []string) (bool, error) {
-	dataPoint := datadogClient.DataPoint{float64(time.Now().Unix()), point}
+	timeNow := float64(time.Now().Unix())
+	dataPoint := datadogClient.DataPoint{&timeNow, &point}
 	dataPoints := []datadogClient.DataPoint{dataPoint}
 
-	fmt.Println(metricName)
 	m := &datadogClient.Metric{
 		Metric: &metricName,
 		Points: dataPoints,

@@ -29,8 +29,8 @@ var rootCmd = &cobra.Command{
 		log.Info(fmt.Sprintf("Connected to Cloudera at %s", c.GetURL()))
 
 		d := &datadog.Datadog{
-			ApiKey:        viper.GetString("datadog.api_key"),
-			ApplicationId: viper.GetString("datadog.application_id"),
+			APIKey:        viper.GetString("datadog.api_key"),
+			ApplicationID: viper.GetString("datadog.application_id"),
 		}
 
 		c.SendHiveMetastoreOpenConnectionMetrics(d)

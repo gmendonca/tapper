@@ -49,14 +49,20 @@ type ClouderaTimeSeries struct {
 	} `json:"items"`
 }
 
-func (cloudera *Cloudera) GetHiveMetastoreOpenConnectionMetrics() (float64, string, string) {
+type ClouderaPoint struct {
+	Point       float64
+	Hostname    string
+	ClusterName string
+}
+
+func (cloudera *Cloudera) GetHiveMetastoreOpenConnectionMetrics() []ClouderaPoint {
 	now := time.Now().Format(time.RFC3339)
 	count := 15
 	from := time.Now().Add(time.Duration(-count) * time.Minute).Format(time.RFC3339)
 
 	endpoint := "api/v18/timeseries"
 
-	url := fmt.Sprintf("%s/%s?query=select+hive_open_connections+where+roleType%%3DHIVESERVER2&contentType=application%%2Fjson&from=%s&to=%s", cloudera.GetURL(), endpoint, from, now)
+	url := fmt.Sprintf("%s/%s?query=select+hive_open_connections+where+roleType%%3DHIVEMETASTORE&contentType=application%%2Fjson&from=%s&to=%s", cloudera.GetURL(), endpoint, from, now)
 
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
@@ -64,54 +70,69 @@ func (cloudera *Cloudera) GetHiveMetastoreOpenConnectionMetrics() (float64, stri
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return float64(0), "", ""
+		return []ClouderaPoint{}
 	}
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 
+	fmt.Println(string(body))
+
 	var clouderaTimeSeries ClouderaTimeSeries
 	jsonErr := json.Unmarshal(body, &clouderaTimeSeries)
 
 	if jsonErr != nil {
-		return float64(0), "", ""
+		return []ClouderaPoint{}
 	}
 
-	points := []float64{}
+	var points []float64
 	var hostname string
 	var clusterName string
+
+	var clouderaPoints []ClouderaPoint
 	for _, item := range clouderaTimeSeries.Items {
 		for _, timeserie := range item.TimeSeries {
 			for _, datai := range timeserie.Data {
 				data, _ := datai.(map[string]interface{})
 				points = append(points, data["value"].(float64))
-				hostname = timeserie.Metadata.Attributes.Hostname
-				clusterName = timeserie.Metadata.Attributes.ClusterName
 			}
+			hostname = timeserie.Metadata.Attributes.Hostname
+			clusterName = timeserie.Metadata.Attributes.ClusterName
+
+			sum := float64(0)
+
+			for point := range points {
+				sum = sum + float64(point)
+			}
+
+			clouderaPoint := ClouderaPoint{
+				Point:       sum / float64(len(points)),
+				Hostname:    hostname,
+				ClusterName: clusterName,
+			}
+
+			clouderaPoints = append(clouderaPoints, clouderaPoint)
 		}
 	}
 
-	sum := float64(0)
-
-	for point := range points {
-		sum = sum + float64(point)
-	}
-
-	return sum / float64(len(points)), hostname, clusterName
+	return clouderaPoints
 }
 
 func (cloudera *Cloudera) SendHiveMetastoreOpenConnectionMetrics(datadog *datadog.Datadog) {
-	point, hostname, clusterName := cloudera.GetHiveMetastoreOpenConnectionMetrics()
-	metricsName := "cloudera.hive.openconnections"
+	clouderaPoints := cloudera.GetHiveMetastoreOpenConnectionMetrics()
+	metricName := "cloudera.hive.metastore.openconnections"
 	metricType := "gauge"
-	tags := []string{fmt.Sprintf("cluster:%s", clusterName)}
 
-	run, err := datadog.PostMetrics(metricsName, point, hostname, metricType, tags)
+	for _, clouderaPoint := range clouderaPoints {
+		tags := []string{fmt.Sprintf("cluster:%s", clouderaPoint.ClusterName)}
 
-	if run {
-		log.Info("Metric posted")
-	} else {
-		log.Error("Metric no posted")
-		log.Error(err)
+		run, err := datadog.PostMetrics(metricName, clouderaPoint.Point, clouderaPoint.Hostname, metricType, tags)
+
+		if run {
+			log.Info(fmt.Sprintf("Metric %s %f posted", metricName, clouderaPoint.Point))
+		} else {
+			log.Error(fmt.Sprintf("Metric %s %f not posted", metricName, clouderaPoint.Point))
+			log.Error(err)
+		}
 	}
 }
