@@ -6,6 +6,7 @@ import (
 
 	"github.com/gmendonca/query-metrics-go/pkg/cloudera"
 	"github.com/gmendonca/query-metrics-go/pkg/datadog"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -25,20 +26,14 @@ var rootCmd = &cobra.Command{
 			SSL:      viper.GetBool("cloudera.ssl"),
 		}
 
+		log.Info(fmt.Sprintf("Connected to Cloudera at %s", c.GetURL()))
+
 		d := &datadog.Datadog{
 			ApiKey:        viper.GetString("datadog.api_key"),
 			ApplicationId: viper.GetString("datadog.application_id"),
 		}
 
-		fmt.Println(c.GetURL())
-
-		point, hostname, clusterName := c.GetHiveMetastoreOpenConnectionMetrics()
-
-		fmt.Println(point)
-		fmt.Println(hostname)
-		fmt.Println(clusterName)
-
-		fmt.Println(d.GetClient())
+		c.SendHiveMetastoreOpenConnectionMetrics(d)
 	},
 }
 

@@ -5,11 +5,11 @@ import (
 )
 
 type Datadog struct {
-	ApiKey        string
-	ApplicationId string
+	APIKey        string
+	ApplicationID string
 }
 
 func (datadog *Datadog) GetClient() *datadogClient.Client {
-	client := datadogClient.NewClient(datadog.ApiKey, datadog.ApplicationId)
+	client := datadogClient.NewClient(datadog.APIKey, datadog.ApplicationID)
 	return client
 }

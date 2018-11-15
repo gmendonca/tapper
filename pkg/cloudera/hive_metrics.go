@@ -6,6 +6,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/gmendonca/query-metrics-go/pkg/datadog"
+	log "github.com/sirupsen/logrus"
 )
 
 type ClouderaTimeSeries struct {
@@ -95,4 +98,20 @@ func (cloudera *Cloudera) GetHiveMetastoreOpenConnectionMetrics() (float64, stri
 	}
 
 	return sum / float64(len(points)), hostname, clusterName
+}
+
+func (cloudera *Cloudera) SendHiveMetastoreOpenConnectionMetrics(datadog *datadog.Datadog) {
+	point, hostname, clusterName := cloudera.GetHiveMetastoreOpenConnectionMetrics()
+	metricsName := "cloudera.hive.openconnections"
+	metricType := "gauge"
+	tags := []string{fmt.Sprintf("cluster:%s", clusterName)}
+
+	run, err := datadog.PostMetrics(metricsName, point, hostname, metricType, tags)
+
+	if run {
+		log.Info("Metric posted")
+	} else {
+		log.Error("Metric no posted")
+		log.Error(err)
+	}
 }
