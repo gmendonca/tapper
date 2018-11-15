@@ -76,8 +76,6 @@ func (cloudera *Cloudera) GetHiveMetastoreOpenConnectionMetrics() []ClouderaPoin
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 
-	fmt.Println(string(body))
-
 	var clouderaTimeSeries ClouderaTimeSeries
 	jsonErr := json.Unmarshal(body, &clouderaTimeSeries)
 
