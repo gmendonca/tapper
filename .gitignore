@@ -12,4 +12,4 @@
 *.out
 
 # Config file with sensitive data
-./configs/config.yaml
+configs/config.yaml
