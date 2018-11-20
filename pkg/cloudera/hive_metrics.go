@@ -57,7 +57,7 @@ type ClouderaPoint struct {
 
 func (cloudera *Cloudera) GetHiveMetastoreOpenConnectionMetrics() []ClouderaPoint {
 	now := time.Now().Format(time.RFC3339)
-	count := 15
+	count := 5
 	from := time.Now().Add(time.Duration(-count) * time.Minute).Format(time.RFC3339)
 
 	endpoint := "api/v18/timeseries"
