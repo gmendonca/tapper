@@ -1,0 +1,13 @@
+{
+    "cloudera": {
+        "username": "",
+        "password": "",
+        "host": "",
+        "port":,
+        "ssl": 
+    },
+    "datadog": {
+        "api_key": "",
+        "application_id": ""
+    }
+}
