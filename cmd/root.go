@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gmendonca/query-metrics-go/pkg/cloudera"
-	"github.com/gmendonca/query-metrics-go/pkg/datadog"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -14,29 +11,9 @@ import (
 var cfgFile string
 
 var rootCmd = &cobra.Command{
-	Use:   "metrics",
-	Short: "something",
-	Long:  `tl; dr;`,
-	Run: func(cmd *cobra.Command, args []string) {
-		c := &cloudera.Cloudera{
-			Host:     viper.GetString("cloudera.host"),
-			Port:     viper.GetInt("cloudera.port"),
-			Username: viper.GetString("cloudera.username"),
-			Password: viper.GetString("cloudera.password"),
-			SSL:      viper.GetBool("cloudera.ssl"),
-		}
-
-		log.Info(fmt.Sprintf("Connected to Cloudera at %s", c.GetURL()))
-
-		d := &datadog.Datadog{
-			APIKey:        viper.GetString("datadog.api_key"),
-			ApplicationID: viper.GetString("datadog.application_id"),
-		}
-
-		c.SendHiveMetastoreOpenConnectionMetrics(d)
-
-		c.SendHiveServerOpenConnectionMetrics(d)
-	},
+	Use:   "tapper",
+	Short: "tapper command line interface",
+	Long:  `tapper`,
 }
 
 func Execute() {
