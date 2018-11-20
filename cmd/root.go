@@ -57,6 +57,7 @@ func initConfig() {
 	} else {
 		// Search config in home directory with name ".cobra" (without extension).
 		viper.AddConfigPath("./configs")
+		viper.AddConfigPath("/etc/query-metrics-go")
 		viper.SetConfigName("config")
 	}
 
