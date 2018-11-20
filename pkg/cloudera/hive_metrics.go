@@ -99,7 +99,7 @@ func (cloudera *Cloudera) GetHiveMetastoreOpenConnectionMetrics() []ClouderaPoin
 
 			sum := float64(0)
 
-			for point := range points {
+			for _, point := range points {
 				sum = sum + float64(point)
 			}
 
@@ -110,6 +110,7 @@ func (cloudera *Cloudera) GetHiveMetastoreOpenConnectionMetrics() []ClouderaPoin
 			}
 
 			clouderaPoints = append(clouderaPoints, clouderaPoint)
+			points = make([]float64, 0)
 		}
 	}
 
@@ -127,9 +128,9 @@ func (cloudera *Cloudera) SendHiveMetastoreOpenConnectionMetrics(datadog *datado
 		run, err := datadog.PostMetrics(metricName, clouderaPoint.Point, clouderaPoint.Hostname, metricType, tags)
 
 		if run {
-			log.Info(fmt.Sprintf("Metric %s %f posted", metricName, clouderaPoint.Point))
+			log.Info(fmt.Sprintf("Metric %s %f posted for cluster %s", metricName, clouderaPoint.Point, clouderaPoint.ClusterName))
 		} else {
-			log.Error(fmt.Sprintf("Metric %s %f not posted", metricName, clouderaPoint.Point))
+			log.Error(fmt.Sprintf("Metric %s %f not posted for cluster %s", metricName, clouderaPoint.Point, clouderaPoint.ClusterName))
 			log.Error(err)
 		}
 	}
