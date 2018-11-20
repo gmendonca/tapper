@@ -34,6 +34,8 @@ var rootCmd = &cobra.Command{
 		}
 
 		c.SendHiveMetastoreOpenConnectionMetrics(d)
+
+		c.SendHiveServerOpenConnectionMetrics(d)
 	},
 }
 
