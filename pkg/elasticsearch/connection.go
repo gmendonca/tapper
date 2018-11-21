@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/olivere/elastic.v5"
 )
 
@@ -23,7 +24,12 @@ func (elasticsearch *Elasticsearch) getURL() string {
 	return fmt.Sprintf("%s://%s:%s", protocol, elasticsearch.Host, strconv.Itoa(elasticsearch.Port))
 }
 
-func (elasticsearch *Elasticsearch) GetClient() error {
-	e := elastic.NewClient()
-	e.SetURL(elasticsearch.getURL())
+func (elasticsearch *Elasticsearch) getClient() *elastic.Client {
+	client, err := elastic.NewSimpleClient(elastic.SetURL(elasticsearch.getURL()))
+	if err != nil {
+		panic(err)
+	}
+
+	log.Info(fmt.Sprintf("Connected to Elasticsearch at %s", elasticsearch.getURL()))
+	return client
 }

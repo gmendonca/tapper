@@ -1,10 +1,7 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/gmendonca/tapper/pkg/elasticsearch"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -21,8 +18,6 @@ var logsCmd = &cobra.Command{
 			Password: viper.GetString("elasticsearch.password"),
 			SSL:      viper.GetBool("elasticsearch.ssl"),
 		}
-
-		log.Info(fmt.Sprintf("Connected to Elasticsearch at %s", e.GetURL()))
 
 		e.GetQueries()
 	},
