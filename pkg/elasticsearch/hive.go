@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"reflect"
+	"io"
 	"regexp"
 	"time"
 
@@ -87,31 +87,48 @@ func (elasticsearch *Elasticsearch) GetQueries() {
 	ctx := context.Background()
 	client := elasticsearch.getClient()
 	for _, index := range indices {
-		searchResult, err := client.Search().
-			Index(index).
-			Query(query).
-			Sort("timestamp", true).
-			Pretty(true).
-			Do(ctx)
+		// searchResult, err := client.Search().
+		// Index(index).
+		// Query(query).
+		// Sort("timestamp", true).
+		// From(0).Size(100).
+		// Pretty(true).
+		// Do(ctx)
 
-		if err != nil {
-			panic(err)
-		}
+		scroll := client.Scroll(index).Query(query).Pretty(true).Size(100)
 
-		fmt.Printf("Query took %d milliseconds\n", searchResult.TookInMillis)
+		for {
+			searchResult, err := scroll.Do(ctx)
+			if err == io.EOF {
+				break
+			}
 
-		count := 0
+			fmt.Printf("Found a total of %d queries\n", searchResult.TotalHits())
 
-		var hiveQuery HiveQuery
-		for _, item := range searchResult.Each(reflect.TypeOf(hiveQuery)) {
-			t := item.(HiveQuery)
-			fmt.Printf("HiveQuery by %s on %s\n", t.User, t.Timestamp)
-			count = count + 1
+			if err != nil {
+				panic(err)
+			}
+
+			fmt.Printf("Query took %d milliseconds\n", searchResult.TookInMillis)
+
+			count := 0
+
+			fmt.Printf("Found a total of %d tweets\n", searchResult.Hits.TotalHits)
+
+			// Iterate through results
+			for _, hit := range searchResult.Hits.Hits {
+
+				var hiveQuery HiveQuery
+				err := json.Unmarshal(*hit.Source, &hiveQuery)
+				if err != nil {
+					// Deserialization failed
+				}
+
+				fmt.Printf("HiveQuery by %s on %s\n", hiveQuery.User, hiveQuery.Timestamp)
+				count++
+			}
 		}
 
 		fmt.Printf("Count = %d\n", count)
-
-		// TotalHits is another convenience function that works even when something goes wrong.
-		fmt.Printf("Found a total of %d queries\n", searchResult.TotalHits())
 	}
 }
