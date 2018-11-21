@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/gmendonca/query-metrics-go/pkg/cloudera"
-	"github.com/gmendonca/query-metrics-go/pkg/datadog"
+	"github.com/gmendonca/tapper/pkg/cloudera"
+	"github.com/gmendonca/tapper/pkg/datadog"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

@@ -10,4 +10,11 @@
         "api_key": "",
         "application_id": ""
     }
+    "elasticsearch": {
+        "username": "",
+        "password": "",
+        "host": "",
+        "port":,
+        "ssl": 
+    }
 }

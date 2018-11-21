@@ -3,6 +3,8 @@ package elasticsearch
 import (
 	"fmt"
 	"strconv"
+
+	"gopkg.in/olivere/elastic.v5"
 )
 
 type Elasticsearch struct {
@@ -13,10 +15,15 @@ type Elasticsearch struct {
 	SSL      bool
 }
 
-func (elasticsearch *Elasticsearch) GetURL() string {
+func (elasticsearch *Elasticsearch) getURL() string {
 	protocol := "http"
 	if elasticsearch.SSL {
 		protocol = "https"
 	}
 	return fmt.Sprintf("%s://%s:%s", protocol, elasticsearch.Host, strconv.Itoa(elasticsearch.Port))
+}
+
+func (elasticsearch *Elasticsearch) GetClient() error {
+	e := elastic.NewClient()
+	e.SetURL(elasticsearch.getURL())
 }

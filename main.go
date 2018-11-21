@@ -1,6 +1,6 @@
 package main
 
-import "github.com/gmendonca/query-metrics-go/cmd"
+import "github.com/gmendonca/tapper/cmd"
 
 func main() {
 	cmd.Execute()
