@@ -14,7 +14,9 @@ import (
 )
 
 const (
-	timestamp = "timestamp"
+	timestamp  = "timestamp"
+	metricName = "hive.query.count"
+	metricType = "gauge"
 )
 
 type QueryPoint struct {
@@ -60,7 +62,7 @@ func (elasticsearch *Elasticsearch) getHiveIndicesNames() []string {
 			}
 			if inTimeSpan(from, now, check) {
 				indices = append(indices, name)
-				fmt.Println(name)
+				log.Debug(name)
 			}
 		}
 	}
@@ -121,6 +123,7 @@ func (elasticsearch *Elasticsearch) GetQueries() []QueryPoint {
 				err := json.Unmarshal(*hit.Source, &hiveQuery)
 				if err != nil {
 					// Deserialization failed
+					panic(err)
 				}
 
 				count++
@@ -129,12 +132,18 @@ func (elasticsearch *Elasticsearch) GetQueries() []QueryPoint {
 
 		queryPoint := QueryPoint{
 			Hostname: index,
-			Count:    count,
+			Count:    float64(count),
 		}
 		queryPoints = append(queryPoints, queryPoint)
 	}
+
+	return queryPoints
 }
 
 func (elasticsearch *Elasticsearch) SendMetrics(datadog *datadog.Datadog) {
-	e.GetQueries()
+	queryPoints := elasticsearch.GetQueries()
+
+	for _, queryPoint := range queryPoints {
+		datadog.PostMetrics(metricName, queryPoint.Count, queryPoint.Hostname, metricType, nil)
+	}
 }

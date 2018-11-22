@@ -26,8 +26,6 @@ var logsCmd = &cobra.Command{
 		}
 
 		e.SendMetrics(d)
-
-		e.GetQueries()
 	},
 }
 
