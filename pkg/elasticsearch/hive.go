@@ -8,12 +8,19 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/gmendonca/tapper/pkg/datadog"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/olivere/elastic.v5"
 )
 
 const (
 	timestamp = "timestamp"
 )
+
+type QueryPoint struct {
+	Hostname string
+	Count    float64
+}
 
 func inTimeSpan(start, end, check time.Time) bool {
 	// Get Dates after the start or equal to end
@@ -63,9 +70,9 @@ func (elasticsearch *Elasticsearch) getHiveIndicesNames() []string {
 
 // GetQueries go through the ES Index looking for indices with format hive-<hostname>-2018.11.21
 // and then get some information of the results. Right now is getting the records of the last five minutes
-func (elasticsearch *Elasticsearch) GetQueries() {
+func (elasticsearch *Elasticsearch) GetQueries() []QueryPoint {
 	now := time.Now().Format(time.RFC3339)
-	count := 100
+	count := 5
 	from := time.Now().Add(time.Duration(-count) * time.Minute).Format(time.RFC3339)
 
 	query := elastic.NewRangeQuery(timestamp)
@@ -84,6 +91,8 @@ func (elasticsearch *Elasticsearch) GetQueries() {
 
 	indices := elasticsearch.getHiveIndicesNames()
 
+	var queryPoints []QueryPoint
+
 	ctx := context.Background()
 	client := elasticsearch.getClient()
 	for _, index := range indices {
@@ -97,15 +106,13 @@ func (elasticsearch *Elasticsearch) GetQueries() {
 				break
 			}
 
-			fmt.Printf("Found a total of %d queries\n", searchResult.TotalHits())
+			log.Debug("Found a total of %d queries\n", searchResult.TotalHits())
 
 			if err != nil {
 				panic(err)
 			}
 
-			fmt.Printf("Query took %d milliseconds\n", searchResult.TookInMillis)
-
-			fmt.Printf("Found a total of %d tweets\n", searchResult.Hits.TotalHits)
+			log.Debug("Query took %d milliseconds\n", searchResult.TookInMillis)
 
 			// Iterate through results
 			for _, hit := range searchResult.Hits.Hits {
@@ -116,11 +123,18 @@ func (elasticsearch *Elasticsearch) GetQueries() {
 					// Deserialization failed
 				}
 
-				fmt.Printf("HiveQuery by %s on %s\n", hiveQuery.User, hiveQuery.Timestamp)
 				count++
 			}
 		}
 
-		fmt.Printf("Count = %d\n", count)
+		queryPoint := QueryPoint{
+			Hostname: index,
+			Count:    count,
+		}
+		queryPoints = append(queryPoints, queryPoint)
 	}
+}
+
+func (elasticsearch *Elasticsearch) SendMetrics(datadog *datadog.Datadog) {
+	e.GetQueries()
 }
