@@ -19,6 +19,11 @@ const (
 	metricType = "gauge"
 )
 
+type IndexPair struct {
+	Hostname  string
+	IndexName string
+}
+
 type QueryPoint struct {
 	Hostname string
 	Count    float64
@@ -29,7 +34,7 @@ func inTimeSpan(start, end, check time.Time) bool {
 	return check.After(start) || check == end
 }
 
-func (elasticsearch *Elasticsearch) getHiveIndicesNames() []string {
+func (elasticsearch *Elasticsearch) getHiveIndicesNames() []IndexPair {
 	client := elasticsearch.getClient()
 	names, err := client.IndexNames()
 	if err != nil {
@@ -37,9 +42,9 @@ func (elasticsearch *Elasticsearch) getHiveIndicesNames() []string {
 		panic(err)
 	}
 
-	r, _ := regexp.Compile("hive-[a-z0-9\\.\\-]+-(?P<year>\\d{4}).(?P<month>\\d{2}).(?P<day>\\d{2})")
+	r, _ := regexp.Compile("hive-(?P<hostname>[a-z0-9\\.\\-]+)-(?P<year>\\d{4}).(?P<month>\\d{2}).(?P<day>\\d{2})")
 
-	var indices []string
+	var indices []IndexPair
 
 	d := 24 * time.Hour
 	now := time.Now().UTC().Truncate(d)
@@ -60,8 +65,13 @@ func (elasticsearch *Elasticsearch) getHiveIndicesNames() []string {
 			if err != nil {
 				panic(err)
 			}
+			fmt.Println(result["hostname"])
 			if inTimeSpan(from, now, check) {
-				indices = append(indices, name)
+				indexPair := IndexPair{
+					Hostname:  result["hostname"],
+					IndexName: name,
+				}
+				indices = append(indices, indexPair)
 				log.Debug(name)
 			}
 		}
@@ -98,7 +108,7 @@ func (elasticsearch *Elasticsearch) GetQueries() []QueryPoint {
 	ctx := context.Background()
 	client := elasticsearch.getClient()
 	for _, index := range indices {
-		scroll := client.Scroll(index).Query(query).Pretty(true).Size(100)
+		scroll := client.Scroll(index.IndexName).Query(query).Pretty(true).Size(100)
 
 		count := 0
 
@@ -131,7 +141,7 @@ func (elasticsearch *Elasticsearch) GetQueries() []QueryPoint {
 		}
 
 		queryPoint := QueryPoint{
-			Hostname: index,
+			Hostname: index.Hostname,
 			Count:    float64(count),
 		}
 		queryPoints = append(queryPoints, queryPoint)
