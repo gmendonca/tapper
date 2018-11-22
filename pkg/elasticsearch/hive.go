@@ -65,7 +65,7 @@ func (elasticsearch *Elasticsearch) getHiveIndicesNames() []string {
 // and then get some information of the results. Right now is getting the records of the last five minutes
 func (elasticsearch *Elasticsearch) GetQueries() {
 	now := time.Now().Format(time.RFC3339)
-	count := 30
+	count := 100
 	from := time.Now().Add(time.Duration(-count) * time.Minute).Format(time.RFC3339)
 
 	query := elastic.NewRangeQuery(timestamp)
@@ -87,15 +87,9 @@ func (elasticsearch *Elasticsearch) GetQueries() {
 	ctx := context.Background()
 	client := elasticsearch.getClient()
 	for _, index := range indices {
-		// searchResult, err := client.Search().
-		// Index(index).
-		// Query(query).
-		// Sort("timestamp", true).
-		// From(0).Size(100).
-		// Pretty(true).
-		// Do(ctx)
-
 		scroll := client.Scroll(index).Query(query).Pretty(true).Size(100)
+
+		count := 0
 
 		for {
 			searchResult, err := scroll.Do(ctx)
@@ -110,8 +104,6 @@ func (elasticsearch *Elasticsearch) GetQueries() {
 			}
 
 			fmt.Printf("Query took %d milliseconds\n", searchResult.TookInMillis)
-
-			count := 0
 
 			fmt.Printf("Found a total of %d tweets\n", searchResult.Hits.TotalHits)
 
