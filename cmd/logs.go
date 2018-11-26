@@ -25,7 +25,8 @@ var logsCmd = &cobra.Command{
 			ApplicationID: viper.GetString("datadog.application_id"),
 		}
 
-		e.SendMetrics(d)
+		e.SendMetrics(d, "hive")
+		e.SendMetrics(d, "presto")
 	},
 }
 

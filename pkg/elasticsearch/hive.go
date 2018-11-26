@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	timestamp  = "timestamp"
-	metricName = "hive.query.count"
-	metricType = "gauge"
+	timestamp         = "timestamp"
+	metricNamePattern = "%s.query.count"
+	metricType        = "gauge"
 )
 
 type IndexPair struct {
@@ -27,6 +27,7 @@ type IndexPair struct {
 type QueryPoint struct {
 	Hostname string
 	Count    float64
+	Source   string
 }
 
 func inTimeSpan(start, end, check time.Time) bool {
@@ -34,7 +35,7 @@ func inTimeSpan(start, end, check time.Time) bool {
 	return check.After(start) || check == end
 }
 
-func (elasticsearch *Elasticsearch) getHiveIndicesNames() []IndexPair {
+func (elasticsearch *Elasticsearch) getIndicesNames(prefix string) []IndexPair {
 	client := elasticsearch.getClient()
 	names, err := client.IndexNames()
 	if err != nil {
@@ -42,7 +43,7 @@ func (elasticsearch *Elasticsearch) getHiveIndicesNames() []IndexPair {
 		panic(err)
 	}
 
-	r, _ := regexp.Compile("hive-(?P<hostname>[a-z0-9\\.\\-]+)-(?P<year>\\d{4}).(?P<month>\\d{2}).(?P<day>\\d{2})")
+	r, _ := regexp.Compile(fmt.Sprintf("%s-(?P<hostname>[a-z0-9\\.\\-]+)-(?P<year>\\d{4}).(?P<month>\\d{2}).(?P<day>\\d{2})", prefix))
 
 	var indices []IndexPair
 
@@ -65,7 +66,6 @@ func (elasticsearch *Elasticsearch) getHiveIndicesNames() []IndexPair {
 			if err != nil {
 				panic(err)
 			}
-			fmt.Println(result["hostname"])
 			if inTimeSpan(from, now, check) {
 				indexPair := IndexPair{
 					Hostname:  result["hostname"],
@@ -82,7 +82,7 @@ func (elasticsearch *Elasticsearch) getHiveIndicesNames() []IndexPair {
 
 // GetQueries go through the ES Index looking for indices with format hive-<hostname>-2018.11.21
 // and then get some information of the results. Right now is getting the records of the last five minutes
-func (elasticsearch *Elasticsearch) GetQueries() []QueryPoint {
+func (elasticsearch *Elasticsearch) GetQueries(queryType string) []QueryPoint {
 	now := time.Now().Format(time.RFC3339)
 	count := 5
 	from := time.Now().Add(time.Duration(-count) * time.Minute).Format(time.RFC3339)
@@ -101,7 +101,7 @@ func (elasticsearch *Elasticsearch) GetQueries() []QueryPoint {
 	}
 	fmt.Println(string(data))
 
-	indices := elasticsearch.getHiveIndicesNames()
+	indices := elasticsearch.getIndicesNames(queryType)
 
 	var queryPoints []QueryPoint
 
@@ -129,13 +129,22 @@ func (elasticsearch *Elasticsearch) GetQueries() []QueryPoint {
 			// Iterate through results
 			for _, hit := range searchResult.Hits.Hits {
 
-				var hiveQuery HiveQuery
-				err := json.Unmarshal(*hit.Source, &hiveQuery)
-				if err != nil {
-					// Deserialization failed
-					panic(err)
-				}
+				if queryType == "hive" {
 
+					var hiveQuery HiveQuery
+					err := json.Unmarshal(*hit.Source, &hiveQuery)
+					if err != nil {
+						// Deserialization failed
+						panic(err)
+					}
+				} else if queryType == "presto" {
+					var prestoQuery PrestoQuery
+					err := json.Unmarshal(*hit.Source, &prestoQuery)
+					if err != nil {
+						// Deserialization failed
+						panic(err)
+					}
+				}
 				count++
 			}
 		}
@@ -143,6 +152,7 @@ func (elasticsearch *Elasticsearch) GetQueries() []QueryPoint {
 		queryPoint := QueryPoint{
 			Hostname: index.Hostname,
 			Count:    float64(count),
+			Source:   queryType,
 		}
 		queryPoints = append(queryPoints, queryPoint)
 	}
@@ -150,8 +160,10 @@ func (elasticsearch *Elasticsearch) GetQueries() []QueryPoint {
 	return queryPoints
 }
 
-func (elasticsearch *Elasticsearch) SendMetrics(datadog *datadog.Datadog) {
-	queryPoints := elasticsearch.GetQueries()
+func (elasticsearch *Elasticsearch) SendMetrics(datadog *datadog.Datadog, queryType string) {
+	queryPoints := elasticsearch.GetQueries(queryType)
+
+	metricName := fmt.Sprintf(metricNamePattern, queryType)
 
 	for _, queryPoint := range queryPoints {
 		datadog.PostMetrics(metricName, queryPoint.Count, queryPoint.Hostname, metricType, nil)
