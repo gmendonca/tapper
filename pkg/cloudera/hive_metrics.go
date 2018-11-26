@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gmendonca/query-metrics-go/pkg/datadog"
+	"github.com/gmendonca/tapper/pkg/datadog"
 	log "github.com/sirupsen/logrus"
 )
 
