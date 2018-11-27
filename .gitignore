@@ -15,3 +15,5 @@
 configs/config.yaml
 configs/config.json
 
+# Binary
+tapper
