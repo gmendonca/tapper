@@ -10,6 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// IndexPair is a struct for ES index name and the hostname extracted from the index naming convenction
 type IndexPair struct {
 	Hostname  string
 	IndexName string
@@ -20,6 +21,7 @@ func inTimeSpan(start, end, check time.Time) bool {
 	return check.After(start) || check == end
 }
 
+// GetIndicesNames returns an IndexPair slice of ES indices names
 func (elasticsearch *Elasticsearch) GetIndicesNames(prefix string) []IndexPair {
 	client := elasticsearch.GetClient()
 	names, err := client.IndexNames()

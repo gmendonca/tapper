@@ -1,5 +1,6 @@
 package model
 
+// HiveQuery is the expected MOdel for Hive Queries to be availabled in the logs sent to ES
 type HiveQuery struct {
 	CompileTime    string `json:"compile_time"`
 	Timestamp      string `json:"timestamp"`

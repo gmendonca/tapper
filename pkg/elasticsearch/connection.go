@@ -24,6 +24,7 @@ func (elasticsearch *Elasticsearch) getURL() string {
 	return fmt.Sprintf("%s://%s:%s", protocol, elasticsearch.Host, strconv.Itoa(elasticsearch.Port))
 }
 
+// GetClient returns an Elasticsearch client to interact with
 func (elasticsearch *Elasticsearch) GetClient() *elastic.Client {
 	client, err := elastic.NewSimpleClient(elastic.SetURL(elasticsearch.getURL()))
 	if err != nil {
