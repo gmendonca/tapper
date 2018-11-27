@@ -157,6 +157,9 @@ func (elasticsearch *Elasticsearch) getQueries(dogstatsd *datadog.Dogstatsd, que
 					tags = append(tags, "user_agent:"+prestoQuery.UserAgent)
 				}
 
+				// Common tags
+				tags = append(tags, "host:"+index.Hostname)
+
 				dogstatsd.SendGauge(queryType, "query.point", tags, float64(1))
 				tags = []string{}
 				count++
