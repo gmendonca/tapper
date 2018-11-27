@@ -10,6 +10,7 @@ import (
 
 	"github.com/gmendonca/tapper/pkg/datadog"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cast"
 	"gopkg.in/olivere/elastic.v5"
 )
 
@@ -160,6 +161,26 @@ func (elasticsearch *Elasticsearch) getQueries(dogstatsd *datadog.Dogstatsd, que
 				// Common tags
 				tags = append(tags, "host:"+index.Hostname)
 				tags = append(tags, "application:"+queryType)
+
+				if queryType == "hive" {
+					duration, err := cast.ToDuration(hiveQuery.TimeTaken)
+					if err != nil {
+						panic(err)
+					}
+					dogstatsd.SendTiming(queryType, "query.duration", tags, duration)
+					compileTime, err := cast.ToDuration(hiveQuery.CompileTime)
+					if err != nil {
+						panic(err)
+					}
+					dogstatsd.SendTiming(queryType, "query.compile_time", tags, compileTime)
+				} else if queryType == "presto" {
+					duration, err := cast.ToDuration(prestoQuery.TimeTaken)
+					if err != nil {
+						panic(err)
+					}
+					dogstatsd.SendTiming(queryType, "query.duration", tags, duration)
+
+				}
 
 				dogstatsd.SendGauge(queryType, "query.point", tags, float64(1))
 				tags = []string{}
