@@ -2,6 +2,7 @@ package datadog
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/DataDog/datadog-go/statsd"
 )
@@ -29,6 +30,20 @@ func (dogstatsd *Dogstatsd) SendGauge(namespace string, name string, tags []stri
 	c.Tags = tags
 
 	err := c.Gauge(name, value, tags, 1)
+
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func (dogstatsd *Dogstatsd) SendTiming(namespace string, name string, tags []string, duration time.Duration) bool {
+	c := dogstatsd.getClient()
+
+	c.Namespace = fmt.Sprintf("%s.", namespace)
+	c.Tags = tags
+
+	err := c.Timing(name, duration, tags, 1)
 
 	if err != nil {
 		return false
