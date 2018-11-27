@@ -25,7 +25,7 @@ func (dogstatsd *Dogstatsd) getClient() *statsd.Client {
 func (dogstatsd *Dogstatsd) SendGauge(namespace string, name string, tags []string, value float64) bool {
 	c := dogstatsd.getClient()
 
-	c.Namespace = namespace
+	c.Namespace = fmt.Sprintf("%s.", namespace)
 	c.Tags = tags
 
 	err := c.Gauge(name, value, tags, 1)
@@ -39,7 +39,7 @@ func (dogstatsd *Dogstatsd) SendGauge(namespace string, name string, tags []stri
 func (dogstatsd *Dogstatsd) SendCounter(namespace string, name string, tags []string) bool {
 	c := dogstatsd.getClient()
 
-	c.Namespace = namespace
+	c.Namespace = fmt.Sprintf("%s.", namespace)
 	c.Tags = tags
 
 	err := c.Incr(name, tags, 1)
