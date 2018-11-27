@@ -25,8 +25,13 @@ var logsCmd = &cobra.Command{
 			ApplicationID: viper.GetString("datadog.application_id"),
 		}
 
-		e.SendMetrics(d, "hive")
-		e.SendMetrics(d, "presto")
+		dog := &datadog.Dogstatsd{
+			Host: viper.GetString("datadog.host"),
+			Port: viper.GetString("datadog.port"),
+		}
+
+		e.SendMetrics(d, dog, "hive")
+		e.SendMetrics(d, dog, "presto")
 	},
 }
 
