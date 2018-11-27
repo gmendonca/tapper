@@ -60,6 +60,19 @@
   version = "v1.8.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:aa3d8d42865c42626b5c1add193692d045b3188b1479f0a0a88690d21fe20083"
+  name = "github.com/mailru/easyjson"
+  packages = [
+    ".",
+    "buffer",
+    "jlexer",
+    "jwriter",
+  ]
+  pruneopts = "UT"
+  revision = "60711f1a8329503b04e1c88535f419d0bb440bff"
+
+[[projects]]
   digest = "1:53bc4cd4914cd7cd52139990d5170d6dc99067ae31c56530621b18b35fc30318"
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
@@ -74,6 +87,14 @@
   pruneopts = "UT"
   revision = "c01d1270ff3e442a8a57cddc1c92dc1138598194"
   version = "v1.2.0"
+
+[[projects]]
+  digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
 
 [[projects]]
   digest = "1:69b1cc331fca23d702bd72f860c6a647afd0aa9fcbc1d0659b1365e26546dd70"
@@ -169,6 +190,18 @@
   version = "v0.3.0"
 
 [[projects]]
+  digest = "1:a321cc26048fee52d1604ca2509e80f77be291ad073fdbcc5a50fdbcb375ed2f"
+  name = "gopkg.in/olivere/elastic.v5"
+  packages = [
+    ".",
+    "config",
+    "uritemplates",
+  ]
+  pruneopts = "UT"
+  revision = "fc3063a8c0686f64e94f4b2c17eb140c06eb6793"
+  version = "v5.0.76"
+
+[[projects]]
   digest = "1:342378ac4dcb378a5448dd723f0784ae519383532f5e70ade24132c4c8693202"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -191,6 +224,7 @@
     "github.com/sirupsen/logrus",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
+    "gopkg.in/olivere/elastic.v5",
     "gopkg.in/zorkian/go-datadog-api.v2",
   ]
   solver-name = "gps-cdcl"

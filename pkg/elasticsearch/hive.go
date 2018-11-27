@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	timestamp         = "timestamp"
+	queryFilter       = "timestamp"
 	metricNamePattern = "%s.query.count"
 	metricType        = "gauge"
 )
@@ -87,7 +87,7 @@ func (elasticsearch *Elasticsearch) GetQueries(queryType string) []QueryPoint {
 	count := 5
 	from := time.Now().Add(time.Duration(-count) * time.Minute).Format(time.RFC3339)
 
-	query := elastic.NewRangeQuery(timestamp)
+	query := elastic.NewRangeQuery(queryFilter)
 	query.Gte(from)
 	query.Lt(now)
 
@@ -128,7 +128,6 @@ func (elasticsearch *Elasticsearch) GetQueries(queryType string) []QueryPoint {
 
 			// Iterate through results
 			for _, hit := range searchResult.Hits.Hits {
-
 				if queryType == "hive" {
 
 					var hiveQuery HiveQuery
@@ -137,14 +136,28 @@ func (elasticsearch *Elasticsearch) GetQueries(queryType string) []QueryPoint {
 						// Deserialization failed
 						panic(err)
 					}
+
+					var tags []String
+					tags = append("queue:" + hiveQuery.Queue)
+					tags = append("user:" + hiveQuery.User)
 				} else if queryType == "presto" {
+
 					var prestoQuery PrestoQuery
 					err := json.Unmarshal(*hit.Source, &prestoQuery)
 					if err != nil {
 						// Deserialization failed
 						panic(err)
 					}
+
+					var tags []String
+					tags = append("memory_pool:" + prestoQuery.MemoryPool)
+					tags = append("source:" + prestoQuery.Source)
+					tags = append("state:" + prestoQuery.State)
+					tags = append("user:" + prestoQuery.User)
+					tags = append("user_agent:" + prestoQuery.UserAgent)
 				}
+
+				dogstatsd.SendGauge(queryType, "query.point", tags, float64(1))
 				count++
 			}
 		}
@@ -168,4 +181,11 @@ func (elasticsearch *Elasticsearch) SendMetrics(datadog *datadog.Datadog, queryT
 	for _, queryPoint := range queryPoints {
 		datadog.PostMetrics(metricName, queryPoint.Count, queryPoint.Hostname, metricType, nil)
 	}
+}
+
+func (elasticsearch *Elasticsearch) SendMetricsStatsD(dogstatsd *datadog.Dogstatsd, queryType string) {
+	c := dogstatsd.GetClient()
+
+	c.Namespace = fmt.Sprintf("%s.", queryType)
+
 }
