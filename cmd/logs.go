@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/gmendonca/tapper/pkg/datadog"
 	"github.com/gmendonca/tapper/pkg/elasticsearch"
+	"github.com/gmendonca/tapper/pkg/tapper"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -30,8 +31,14 @@ var logsCmd = &cobra.Command{
 			Port: viper.GetInt("datadog.port"),
 		}
 
-		e.SendMetrics(d, dog, "hive")
-		e.SendMetrics(d, dog, "presto")
+		tapper := &tapper.Tapper{
+			Elasticsearch: e,
+			Datadog:       d,
+			Dogstatsd:     dog,
+		}
+
+		tapper.SendMetrics("hive")
+		tapper.SendMetrics("presto")
 	},
 }
 

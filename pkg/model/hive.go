@@ -1,4 +1,4 @@
-package elasticsearch
+package model
 
 type HiveQuery struct {
 	CompileTime    string `json:"compile_time"`

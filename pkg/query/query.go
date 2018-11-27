@@ -1,17 +1,18 @@
-package elasticsearch
+package query
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"regexp"
 	"time"
 
 	"github.com/gmendonca/tapper/pkg/datadog"
+	"github.com/gmendonca/tapper/pkg/elasticsearch"
+	"github.com/gmendonca/tapper/pkg/model"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
-	"gopkg.in/olivere/elastic.v5"
+	elastic "gopkg.in/olivere/elastic.v5"
 )
 
 const (
@@ -20,70 +21,15 @@ const (
 	metricType        = "gauge"
 )
 
-type IndexPair struct {
-	Hostname  string
-	IndexName string
-}
-
 type QueryPoint struct {
 	Hostname string
 	Count    float64
 	Source   string
 }
 
-func inTimeSpan(start, end, check time.Time) bool {
-	// Get Dates after the start or equal to end
-	return check.After(start) || check == end
-}
-
-func (elasticsearch *Elasticsearch) getIndicesNames(prefix string) []IndexPair {
-	client := elasticsearch.getClient()
-	names, err := client.IndexNames()
-	if err != nil {
-		// Handle error
-		panic(err)
-	}
-
-	r, _ := regexp.Compile(fmt.Sprintf("%s-(?P<hostname>[a-z0-9\\.\\-]+)-(?P<year>\\d{4}).(?P<month>\\d{2}).(?P<day>\\d{2})", prefix))
-
-	var indices []IndexPair
-
-	d := 24 * time.Hour
-	now := time.Now().UTC().Truncate(d)
-	count := 5
-	from := time.Now().UTC().Add(time.Duration(-count) * time.Minute).Truncate(d)
-
-	for _, name := range names {
-		if r.MatchString(name) {
-			match := r.FindStringSubmatch(name)
-			result := make(map[string]string)
-			for i, name := range r.SubexpNames() {
-				if i != 0 && name != "" {
-					result[name] = match[i]
-				}
-			}
-			date := fmt.Sprintf("%s-%s-%s", result["year"], result["month"], result["day"])
-			check, err := time.Parse("2006-01-02", date)
-			if err != nil {
-				panic(err)
-			}
-			if inTimeSpan(from, now, check) {
-				indexPair := IndexPair{
-					Hostname:  result["hostname"],
-					IndexName: name,
-				}
-				indices = append(indices, indexPair)
-				log.Debug(name)
-			}
-		}
-	}
-
-	return indices
-}
-
 // GetQueries go through the ES Index looking for indices with format hive-<hostname>-2018.11.21
 // and then get some information of the results. Right now is getting the records of the last five minutes
-func (elasticsearch *Elasticsearch) getQueries(dogstatsd *datadog.Dogstatsd, queryType string) []QueryPoint {
+func GetQueries(dogstatsd *datadog.Dogstatsd, elasticsearch *elasticsearch.Elasticsearch, queryType string) []QueryPoint {
 	now := time.Now().Format(time.RFC3339)
 	count := 5
 	from := time.Now().Add(time.Duration(-count) * time.Minute).Format(time.RFC3339)
@@ -102,12 +48,12 @@ func (elasticsearch *Elasticsearch) getQueries(dogstatsd *datadog.Dogstatsd, que
 	}
 	fmt.Println(string(data))
 
-	indices := elasticsearch.getIndicesNames(queryType)
+	indices := elasticsearch.GetIndicesNames(queryType)
 
 	var queryPoints []QueryPoint
 
 	ctx := context.Background()
-	client := elasticsearch.getClient()
+	client := elasticsearch.GetClient()
 	for _, index := range indices {
 		scroll := client.Scroll(index.IndexName).Query(query).Pretty(true).Size(100)
 
@@ -133,7 +79,7 @@ func (elasticsearch *Elasticsearch) getQueries(dogstatsd *datadog.Dogstatsd, que
 			for _, hit := range searchResult.Hits.Hits {
 				if queryType == "hive" {
 
-					var hiveQuery HiveQuery
+					var hiveQuery model.HiveQuery
 					err := json.Unmarshal(*hit.Source, &hiveQuery)
 					if err != nil {
 						// Deserialization failed
@@ -152,7 +98,7 @@ func (elasticsearch *Elasticsearch) getQueries(dogstatsd *datadog.Dogstatsd, que
 
 				} else if queryType == "presto" {
 
-					var prestoQuery PrestoQuery
+					var prestoQuery model.PrestoQuery
 					err := json.Unmarshal(*hit.Source, &prestoQuery)
 					if err != nil {
 						// Deserialization failed
@@ -188,8 +134,8 @@ func (elasticsearch *Elasticsearch) getQueries(dogstatsd *datadog.Dogstatsd, que
 	return queryPoints
 }
 
-func (elasticsearch *Elasticsearch) SendMetrics(datadog *datadog.Datadog, dogstatsd *datadog.Dogstatsd, queryType string) {
-	queryPoints := elasticsearch.getQueries(dogstatsd, queryType)
+func SendQueries(datadog *datadog.Datadog, dogstatsd *datadog.Dogstatsd, elasticsearch *elasticsearch.Elasticsearch, queryType string) {
+	queryPoints := GetQueries(dogstatsd, elasticsearch, queryType)
 
 	metricName := fmt.Sprintf(metricNamePattern, queryType)
 

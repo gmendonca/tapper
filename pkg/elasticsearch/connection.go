@@ -24,7 +24,7 @@ func (elasticsearch *Elasticsearch) getURL() string {
 	return fmt.Sprintf("%s://%s:%s", protocol, elasticsearch.Host, strconv.Itoa(elasticsearch.Port))
 }
 
-func (elasticsearch *Elasticsearch) getClient() *elastic.Client {
+func (elasticsearch *Elasticsearch) GetClient() *elastic.Client {
 	client, err := elastic.NewSimpleClient(elastic.SetURL(elasticsearch.getURL()))
 	if err != nil {
 		panic(err)

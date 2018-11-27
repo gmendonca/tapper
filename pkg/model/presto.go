@@ -1,4 +1,4 @@
-package elasticsearch
+package model
 
 type PrestoQuery struct {
 	TimeTaken      string `json:"time_taken"`
