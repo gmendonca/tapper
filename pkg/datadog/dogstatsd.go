@@ -33,13 +33,13 @@ func (dogstatsd *Dogstatsd) SendGauge(namespace string, name string, tags []stri
 	return true
 }
 
-func (dogstatsd *Dogstatsd) SendCounter(namespace string, name string, tags []string, value float64) bool {
+func (dogstatsd *Dogstatsd) SendCounter(namespace string, name string, tags []string) bool {
 	c := dogstatsd.getClient()
 
 	c.Namespace = namespace
 	c.Tags = tags
 
-	err = c.Incr(name, value, tags, 1)
+	err = c.Incr(name, tags, 1)
 
 	if err != nil {
 		return false
