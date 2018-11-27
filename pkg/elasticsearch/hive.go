@@ -142,6 +142,14 @@ func (elasticsearch *Elasticsearch) getQueries(dogstatsd *datadog.Dogstatsd, que
 
 					tags = append(tags, "queue:"+hiveQuery.Queue)
 					tags = append(tags, "user:"+hiveQuery.User)
+					tags = append(tags, "host:"+index.Hostname)
+					tags = append(tags, "application:"+queryType)
+
+					duration := cast.ToDuration(hiveQuery.TimeTaken)
+					dogstatsd.SendTiming(queryType, "query.duration", tags, duration)
+					compileTime := cast.ToDuration(hiveQuery.CompileTime)
+					dogstatsd.SendTiming(queryType, "query.compile_time", tags, compileTime)
+
 				} else if queryType == "presto" {
 
 					var prestoQuery PrestoQuery
@@ -156,30 +164,11 @@ func (elasticsearch *Elasticsearch) getQueries(dogstatsd *datadog.Dogstatsd, que
 					tags = append(tags, "state:"+prestoQuery.State)
 					tags = append(tags, "user:"+prestoQuery.User)
 					tags = append(tags, "user_agent:"+prestoQuery.UserAgent)
-				}
+					tags = append(tags, "host:"+index.Hostname)
+					tags = append(tags, "application:"+queryType)
 
-				// Common tags
-				tags = append(tags, "host:"+index.Hostname)
-				tags = append(tags, "application:"+queryType)
-
-				if queryType == "hive" {
-					duration, err := cast.ToDuration(hiveQuery.TimeTaken)
-					if err != nil {
-						panic(err)
-					}
+					duration := cast.ToDuration(prestoQuery.TimeTaken)
 					dogstatsd.SendTiming(queryType, "query.duration", tags, duration)
-					compileTime, err := cast.ToDuration(hiveQuery.CompileTime)
-					if err != nil {
-						panic(err)
-					}
-					dogstatsd.SendTiming(queryType, "query.compile_time", tags, compileTime)
-				} else if queryType == "presto" {
-					duration, err := cast.ToDuration(prestoQuery.TimeTaken)
-					if err != nil {
-						panic(err)
-					}
-					dogstatsd.SendTiming(queryType, "query.duration", tags, duration)
-
 				}
 
 				dogstatsd.SendGauge(queryType, "query.point", tags, float64(1))
