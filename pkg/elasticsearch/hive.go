@@ -159,7 +159,7 @@ func (elasticsearch *Elasticsearch) getQueries(dogstatsd *datadog.Dogstatsd, que
 
 				// Common tags
 				tags = append(tags, "host:"+index.Hostname)
-				tags = appens(tags, "application:"+queryType)
+				tags = append(tags, "application:"+queryType)
 
 				dogstatsd.SendGauge(queryType, "query.point", tags, float64(1))
 				tags = []string{}
