@@ -8,7 +8,9 @@
     },
     "datadog": {
         "api_key": "",
-        "application_id": ""
+        "application_id": "",
+        "host": "",
+        "port":
     }
     "elasticsearch": {
         "username": "",
