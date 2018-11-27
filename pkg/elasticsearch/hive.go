@@ -82,7 +82,7 @@ func (elasticsearch *Elasticsearch) getIndicesNames(prefix string) []IndexPair {
 
 // GetQueries go through the ES Index looking for indices with format hive-<hostname>-2018.11.21
 // and then get some information of the results. Right now is getting the records of the last five minutes
-func (elasticsearch *Elasticsearch) GetQueries(queryType string) []QueryPoint {
+func (elasticsearch *Elasticsearch) getQueries(dogstatsd *datadog.Dogstatsd, queryType string) []QueryPoint {
 	now := time.Now().Format(time.RFC3339)
 	count := 5
 	from := time.Now().Add(time.Duration(-count) * time.Minute).Format(time.RFC3339)
@@ -126,6 +126,8 @@ func (elasticsearch *Elasticsearch) GetQueries(queryType string) []QueryPoint {
 
 			log.Debug("Query took %d milliseconds\n", searchResult.TookInMillis)
 
+			var tags []string
+
 			// Iterate through results
 			for _, hit := range searchResult.Hits.Hits {
 				if queryType == "hive" {
@@ -137,9 +139,8 @@ func (elasticsearch *Elasticsearch) GetQueries(queryType string) []QueryPoint {
 						panic(err)
 					}
 
-					var tags []String
-					tags = append("queue:" + hiveQuery.Queue)
-					tags = append("user:" + hiveQuery.User)
+					tags = append(tags, "queue:"+hiveQuery.Queue)
+					tags = append(tags, "user:"+hiveQuery.User)
 				} else if queryType == "presto" {
 
 					var prestoQuery PrestoQuery
@@ -149,15 +150,15 @@ func (elasticsearch *Elasticsearch) GetQueries(queryType string) []QueryPoint {
 						panic(err)
 					}
 
-					var tags []String
-					tags = append("memory_pool:" + prestoQuery.MemoryPool)
-					tags = append("source:" + prestoQuery.Source)
-					tags = append("state:" + prestoQuery.State)
-					tags = append("user:" + prestoQuery.User)
-					tags = append("user_agent:" + prestoQuery.UserAgent)
+					tags = append(tags, "memory_pool:"+prestoQuery.MemoryPool)
+					tags = append(tags, "source:"+prestoQuery.Source)
+					tags = append(tags, "state:"+prestoQuery.State)
+					tags = append(tags, "user:"+prestoQuery.User)
+					tags = append(tags, "user_agent:"+prestoQuery.UserAgent)
 				}
 
 				dogstatsd.SendGauge(queryType, "query.point", tags, float64(1))
+				tags = []string{}
 				count++
 			}
 		}
@@ -173,19 +174,12 @@ func (elasticsearch *Elasticsearch) GetQueries(queryType string) []QueryPoint {
 	return queryPoints
 }
 
-func (elasticsearch *Elasticsearch) SendMetrics(datadog *datadog.Datadog, queryType string) {
-	queryPoints := elasticsearch.GetQueries(queryType)
+func (elasticsearch *Elasticsearch) SendMetrics(datadog *datadog.Datadog, dogstatsd *datadog.Dogstatsd, queryType string) {
+	queryPoints := elasticsearch.getQueries(dogstatsd, queryType)
 
 	metricName := fmt.Sprintf(metricNamePattern, queryType)
 
 	for _, queryPoint := range queryPoints {
 		datadog.PostMetrics(metricName, queryPoint.Count, queryPoint.Hostname, metricType, nil)
 	}
-}
-
-func (elasticsearch *Elasticsearch) SendMetricsStatsD(dogstatsd *datadog.Dogstatsd, queryType string) {
-	c := dogstatsd.GetClient()
-
-	c.Namespace = fmt.Sprintf("%s.", queryType)
-
 }

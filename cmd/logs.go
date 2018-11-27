@@ -27,7 +27,7 @@ var logsCmd = &cobra.Command{
 
 		dog := &datadog.Dogstatsd{
 			Host: viper.GetString("datadog.host"),
-			Port: viper.GetString("datadog.port"),
+			Port: viper.GetInt("datadog.port"),
 		}
 
 		e.SendMetrics(d, dog, "hive")

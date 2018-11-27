@@ -16,6 +16,9 @@ type Dogstatsd struct {
 func (dogstatsd *Dogstatsd) getClient() *statsd.Client {
 	address := fmt.Sprintf("%s:%d", dogstatsd.Host, dogstatsd.Port)
 	c, err := statsd.New(address)
+	if err != nil {
+		panic(err)
+	}
 	return c
 }
 
@@ -25,7 +28,7 @@ func (dogstatsd *Dogstatsd) SendGauge(namespace string, name string, tags []stri
 	c.Namespace = namespace
 	c.Tags = tags
 
-	err = c.Gauge(name, value, tags, 1)
+	err := c.Gauge(name, value, tags, 1)
 
 	if err != nil {
 		return false
@@ -39,7 +42,7 @@ func (dogstatsd *Dogstatsd) SendCounter(namespace string, name string, tags []st
 	c.Namespace = namespace
 	c.Tags = tags
 
-	err = c.Incr(name, tags, 1)
+	err := c.Incr(name, tags, 1)
 
 	if err != nil {
 		return false
