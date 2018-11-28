@@ -134,6 +134,7 @@ func GetQueries(dogstatsd *datadog.Dogstatsd, elasticsearch *elasticsearch.Elast
 	return queryPoints
 }
 
+//SendQueries send the info from queries as Datadog metrics
 func SendQueries(datadog *datadog.Datadog, dogstatsd *datadog.Dogstatsd, elasticsearch *elasticsearch.Elasticsearch, queryType string) {
 	queryPoints := GetQueries(dogstatsd, elasticsearch, queryType)
 

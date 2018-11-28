@@ -11,7 +11,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type ClouderaTimeSeries struct {
+//TimeSeries is the json struct like used by cloudera API to report metrics
+type TimeSeries struct {
 	Items []struct {
 		TimeSeries []struct {
 			Metadata struct {
@@ -49,16 +50,22 @@ type ClouderaTimeSeries struct {
 	} `json:"items"`
 }
 
-type ClouderaPoint struct {
-	Point       float64
+//Point type that has the metric vlaue alongside with Hostname and Clustername
+type Point struct {
+	Value       float64
 	Hostname    string
 	ClusterName string
 }
 
-const HiveMetastore = "HIVEMETASTORE"
-const HiveServer = "HIVESERVER2"
+const (
+	//HiveMetastore is the roleType used by Cloudera query to get the metrics
+	HiveMetastore = "HIVEMETASTORE"
+	//HiveServer is the roleType used by Cloudera query to get the metrics
+	HiveServer = "HIVESERVER2"
+)
 
-func (cloudera *Cloudera) GetHiveOpenConnectionMetrics(roleType string) []ClouderaPoint {
+//GetHiveOpenConnectionMetrics uses Cloudera API to get Hive Metrics
+func (cloudera *Cloudera) GetHiveOpenConnectionMetrics(roleType string) []Point {
 	now := time.Now().Format(time.RFC3339)
 	count := 5
 	from := time.Now().Add(time.Duration(-count) * time.Minute).Format(time.RFC3339)
@@ -73,24 +80,24 @@ func (cloudera *Cloudera) GetHiveOpenConnectionMetrics(roleType string) []Cloude
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return []ClouderaPoint{}
+		return []Point{}
 	}
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 
-	var clouderaTimeSeries ClouderaTimeSeries
+	var clouderaTimeSeries TimeSeries
 	jsonErr := json.Unmarshal(body, &clouderaTimeSeries)
 
 	if jsonErr != nil {
-		return []ClouderaPoint{}
+		return []Point{}
 	}
 
 	var points []float64
 	var hostname string
 	var clusterName string
 
-	var clouderaPoints []ClouderaPoint
+	var clouderaPoints []Point
 	for _, item := range clouderaTimeSeries.Items {
 		for _, timeserie := range item.TimeSeries {
 			for _, datai := range timeserie.Data {
@@ -111,8 +118,8 @@ func (cloudera *Cloudera) GetHiveOpenConnectionMetrics(roleType string) []Cloude
 				sum = sum + float64(point)
 			}
 
-			clouderaPoint := ClouderaPoint{
-				Point:       sum / float64(len(points)),
+			clouderaPoint := Point{
+				Value:       sum / float64(len(points)),
 				Hostname:    hostname,
 				ClusterName: clusterName,
 			}
@@ -125,6 +132,8 @@ func (cloudera *Cloudera) GetHiveOpenConnectionMetrics(roleType string) []Cloude
 	return clouderaPoints
 }
 
+//SendHiveMetastoreOpenConnectionMetrics send Hive Metastore Open Connection Metrics from Cloudera
+//Dashboard to Datadog
 func (cloudera *Cloudera) SendHiveMetastoreOpenConnectionMetrics(datadog *datadog.Datadog) {
 	clouderaPoints := cloudera.GetHiveOpenConnectionMetrics(HiveMetastore)
 	metricName := "cloudera.hive.metastore.openconnections"
@@ -133,17 +142,19 @@ func (cloudera *Cloudera) SendHiveMetastoreOpenConnectionMetrics(datadog *datado
 	for _, clouderaPoint := range clouderaPoints {
 		tags := []string{fmt.Sprintf("cluster:%s", clouderaPoint.ClusterName)}
 
-		run, err := datadog.PostMetrics(metricName, clouderaPoint.Point, clouderaPoint.Hostname, metricType, tags)
+		run, err := datadog.PostMetrics(metricName, clouderaPoint.Value, clouderaPoint.Hostname, metricType, tags)
 
 		if run {
-			log.Info(fmt.Sprintf("Metric %s %f posted for cluster %s", metricName, clouderaPoint.Point, clouderaPoint.ClusterName))
+			log.Info(fmt.Sprintf("Metric %s %f posted for cluster %s", metricName, clouderaPoint.Value, clouderaPoint.ClusterName))
 		} else {
-			log.Error(fmt.Sprintf("Metric %s %f not posted for cluster %s", metricName, clouderaPoint.Point, clouderaPoint.ClusterName))
+			log.Error(fmt.Sprintf("Metric %s %f not posted for cluster %s", metricName, clouderaPoint.Value, clouderaPoint.ClusterName))
 			log.Error(err)
 		}
 	}
 }
 
+//SendHiveServerOpenConnectionMetrics send HiveServer Open Connection Metrics from Cloudera
+//Dashboard to Datadog
 func (cloudera *Cloudera) SendHiveServerOpenConnectionMetrics(datadog *datadog.Datadog) {
 	clouderaPoints := cloudera.GetHiveOpenConnectionMetrics(HiveServer)
 	metricName := "cloudera.hive.server.openconnections"
@@ -152,12 +163,12 @@ func (cloudera *Cloudera) SendHiveServerOpenConnectionMetrics(datadog *datadog.D
 	for _, clouderaPoint := range clouderaPoints {
 		tags := []string{fmt.Sprintf("cluster:%s", clouderaPoint.ClusterName)}
 
-		run, err := datadog.PostMetrics(metricName, clouderaPoint.Point, clouderaPoint.Hostname, metricType, tags)
+		run, err := datadog.PostMetrics(metricName, clouderaPoint.Value, clouderaPoint.Hostname, metricType, tags)
 
 		if run {
-			log.Info(fmt.Sprintf("Metric %s %f posted for cluster %s", metricName, clouderaPoint.Point, clouderaPoint.ClusterName))
+			log.Info(fmt.Sprintf("Metric %s %f posted for cluster %s", metricName, clouderaPoint.Value, clouderaPoint.ClusterName))
 		} else {
-			log.Error(fmt.Sprintf("Metric %s %f not posted for cluster %s", metricName, clouderaPoint.Point, clouderaPoint.ClusterName))
+			log.Error(fmt.Sprintf("Metric %s %f not posted for cluster %s", metricName, clouderaPoint.Value, clouderaPoint.ClusterName))
 			log.Error(err)
 		}
 	}
