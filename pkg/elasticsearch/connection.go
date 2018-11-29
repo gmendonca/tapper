@@ -8,6 +8,7 @@ import (
 	"gopkg.in/olivere/elastic.v5"
 )
 
+//Elasticsearch is the information to access the Elasticsearch host
 type Elasticsearch struct {
 	Host     string
 	Port     int
@@ -16,7 +17,8 @@ type Elasticsearch struct {
 	SSL      bool
 }
 
-func (elasticsearch *Elasticsearch) getURL() string {
+//GetURL uses Elasticsearch struct to build up the url to access it
+func (elasticsearch *Elasticsearch) GetURL() string {
 	protocol := "http"
 	if elasticsearch.SSL {
 		protocol = "https"
@@ -26,11 +28,11 @@ func (elasticsearch *Elasticsearch) getURL() string {
 
 // GetClient returns an Elasticsearch client to interact with
 func (elasticsearch *Elasticsearch) GetClient() *elastic.Client {
-	client, err := elastic.NewSimpleClient(elastic.SetURL(elasticsearch.getURL()))
+	client, err := elastic.NewSimpleClient(elastic.SetURL(elasticsearch.GetURL()))
 	if err != nil {
 		panic(err)
 	}
 
-	log.Info(fmt.Sprintf("Connected to Elasticsearch at %s", elasticsearch.getURL()))
+	log.Info(fmt.Sprintf("Connected to Elasticsearch at %s", elasticsearch.GetURL()))
 	return client
 }

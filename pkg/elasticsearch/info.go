@@ -3,10 +3,8 @@ package elasticsearch
 import (
 	"fmt"
 	"regexp"
-	"strings"
 	"time"
 
-	"github.com/gmendonca/tapper/pkg/datadog"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -65,10 +63,4 @@ func (elasticsearch *Elasticsearch) GetIndicesNames(prefix string) []IndexPair {
 	}
 
 	return indices
-}
-
-func (elasticsearch *Elasticsearch) analyzeQueries(dogstatsd *datadog.Dogstatsd, query string) []string {
-	parts := strings.Fields(query)
-
-	return parts
 }

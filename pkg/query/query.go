@@ -21,7 +21,8 @@ const (
 	metricType        = "gauge"
 )
 
-type QueryPoint struct {
+//Point is the Queries Count Metrics struct
+type Point struct {
 	Hostname string
 	Count    float64
 	Source   string
@@ -29,7 +30,7 @@ type QueryPoint struct {
 
 // GetQueries go through the ES Index looking for indices with format hive-<hostname>-2018.11.21
 // and then get some information of the results. Right now is getting the records of the last five minutes
-func GetQueries(dogstatsd *datadog.Dogstatsd, elasticsearch *elasticsearch.Elasticsearch, queryType string) []QueryPoint {
+func GetQueries(dogstatsd *datadog.Dogstatsd, elasticsearch *elasticsearch.Elasticsearch, queryType string) []Point {
 	now := time.Now().Format(time.RFC3339)
 	count := 5
 	from := time.Now().Add(time.Duration(-count) * time.Minute).Format(time.RFC3339)
@@ -50,7 +51,7 @@ func GetQueries(dogstatsd *datadog.Dogstatsd, elasticsearch *elasticsearch.Elast
 
 	indices := elasticsearch.GetIndicesNames(queryType)
 
-	var queryPoints []QueryPoint
+	var queryPoints []Point
 
 	ctx := context.Background()
 	client := elasticsearch.GetClient()
@@ -123,7 +124,7 @@ func GetQueries(dogstatsd *datadog.Dogstatsd, elasticsearch *elasticsearch.Elast
 			}
 		}
 
-		queryPoint := QueryPoint{
+		queryPoint := Point{
 			Hostname: index.Hostname,
 			Count:    float64(count),
 			Source:   queryType,
