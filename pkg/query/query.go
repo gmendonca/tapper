@@ -130,6 +130,18 @@ func GetQueries(dogstatsd *datadog.Dogstatsd, elasticsearch *elasticsearch.Elast
 
 					duration := cast.ToDuration(prestoQuery.TimeTaken)
 					dogstatsd.SendTiming(queryType, "query.duration", tags, duration)
+
+					a := AnalyzeQueries(prestoQuery.Query)
+
+					for _, join := range a.Joins {
+						tagsJoin = append(tags, "join:"+join)
+						dogstatsd.SendGauge(queryType, "query.joins", tagsJoin, float64(1))
+					}
+
+					for _, tableName := range a.TablesNames {
+						tagsTableNames = append(tags, "tablename:"+tableName)
+						dogstatsd.SendGauge(queryType, "query.table_names", tagsTableNames, float64(1))
+					}
 				}
 
 				dogstatsd.SendGauge(queryType, "query.point", tags, float64(1))
