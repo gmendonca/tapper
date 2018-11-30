@@ -1,6 +1,8 @@
 package query
 
-import "strings"
+import (
+	"strings"
+)
 
 type AnalyzedQuery struct {
 	TablesNames []string

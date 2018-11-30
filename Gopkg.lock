@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  digest = "1:bd285ec20a7450d2272631284de698f2d76e923a458fee90e99cc1db4b97708d"
+  name = "github.com/DataDog/datadog-go"
+  packages = ["statsd"]
+  pruneopts = "UT"
+  revision = "e67964b4021ad3a334e748e8811eb3cd6becbc6e"
+  version = "2.1.0"
+
+[[projects]]
   digest = "1:0d5fdcd4a963f5486979d53d72c7d784ced34836e3eba766977962c1e630fedd"
   name = "github.com/cenkalti/backoff"
   packages = ["."]
@@ -221,7 +229,9 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/DataDog/datadog-go/statsd",
     "github.com/sirupsen/logrus",
+    "github.com/spf13/cast",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
     "gopkg.in/olivere/elastic.v5",
