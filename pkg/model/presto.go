@@ -1,5 +1,6 @@
-package elasticsearch
+package model
 
+// PrestoQuery is the expected MOdel for Presto Queries to be availabled in the logs sent to ES
 type PrestoQuery struct {
 	TimeTaken      string `json:"time_taken"`
 	MemoryPool     string `json:"memory_pool"`

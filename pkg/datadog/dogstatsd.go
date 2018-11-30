@@ -23,6 +23,7 @@ func (dogstatsd *Dogstatsd) getClient() *statsd.Client {
 	return c
 }
 
+// SendGauge sends a Gauge Metric to Dogstatsd
 func (dogstatsd *Dogstatsd) SendGauge(namespace string, name string, tags []string, value float64) bool {
 	c := dogstatsd.getClient()
 
@@ -37,6 +38,7 @@ func (dogstatsd *Dogstatsd) SendGauge(namespace string, name string, tags []stri
 	return true
 }
 
+// SendTiming sends a Timing Metric to Dogstatsd
 func (dogstatsd *Dogstatsd) SendTiming(namespace string, name string, tags []string, duration time.Duration) bool {
 	c := dogstatsd.getClient()
 
@@ -51,6 +53,7 @@ func (dogstatsd *Dogstatsd) SendTiming(namespace string, name string, tags []str
 	return true
 }
 
+// SendCounter sends a Counter Increment Metric to Dogstatsd
 func (dogstatsd *Dogstatsd) SendCounter(namespace string, name string, tags []string) bool {
 	c := dogstatsd.getClient()
 

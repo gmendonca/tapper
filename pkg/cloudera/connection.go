@@ -5,6 +5,7 @@ import (
 	"strconv"
 )
 
+//Cloudera holds information to access the Cloudera Manager API
 type Cloudera struct {
 	Host     string
 	Port     int
@@ -13,6 +14,7 @@ type Cloudera struct {
 	SSL      bool
 }
 
+//GetURL uses Cloudera struct to build up the url to access it
 func (cloudera *Cloudera) GetURL() string {
 	protocol := "http"
 	if cloudera.SSL {
