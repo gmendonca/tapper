@@ -75,6 +75,8 @@ func GetQueries(dogstatsd *datadog.Dogstatsd, elasticsearch *elasticsearch.Elast
 			log.Debug("Query took %d milliseconds\n", searchResult.TookInMillis)
 
 			var tags []string
+			var tagsJoin []string
+			var tagsTableNames []string
 
 			// Iterate through results
 			for _, hit := range searchResult.Hits.Hits {
@@ -96,6 +98,18 @@ func GetQueries(dogstatsd *datadog.Dogstatsd, elasticsearch *elasticsearch.Elast
 					dogstatsd.SendTiming(queryType, "query.duration", tags, duration)
 					compileTime := cast.ToDuration(hiveQuery.CompileTime)
 					dogstatsd.SendTiming(queryType, "query.compile_time", tags, compileTime)
+
+					a := AnalyzeQueries(hiveQuery.Query)
+
+					for _, join := range a.Joins {
+						tagsJoin = append(tags, "join:"+join)
+						dogstatsd.SendGauge(queryType, "query.joins", tagsJoin, float64(1))
+					}
+
+					for _, tableName := range a.TablesNames {
+						tagsTableNames = append(tags, "tablename:"+tableName)
+						dogstatsd.SendGauge(queryType, "query.table_names", tagsTableNames, float64(1))
+					}
 
 				} else if queryType == "presto" {
 
