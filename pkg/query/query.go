@@ -66,13 +66,13 @@ func GetQueries(dogstatsd *datadog.Dogstatsd, elasticsearch *elasticsearch.Elast
 				break
 			}
 
-			log.Debug("Found a total of %d queries\n", searchResult.TotalHits())
+			log.Debug(fmt.Sprintf("Found a total of %d queries\n", searchResult.TotalHits()))
 
 			if err != nil {
 				panic(err)
 			}
 
-			log.Debug("Query took %d milliseconds\n", searchResult.TookInMillis)
+			log.Debug(fmt.Sprintf("Query took %d milliseconds\n", searchResult.TookInMillis))
 
 			var tags []string
 			var tagsJoin []string
