@@ -1,4 +1,4 @@
-# tapper [![GoDoc](https://godoc.org/github.com/gmendonca/tapper?status.svg)][![Go Report Card](https://goreportcard.com/badge/github.com/gmendonca/tapper)](https://goreportcard.com/report/github.com/gmendonca/tapper)
+# tapper ![GoDoc](https://godoc.org/github.com/gmendonca/tapper?status.svg)[![Go Report Card](https://goreportcard.com/badge/github.com/gmendonca/tapper)](https://goreportcard.com/report/github.com/gmendonca/tapper)
 
 tapper is a Go program to process and analyse Hive and Presto query logs.
 
