@@ -4,6 +4,7 @@ import (
 	"strings"
 )
 
+//AnalyzedQuery gives the tables and joins extracted from the query
 type AnalyzedQuery struct {
 	TablesNames []string
 	Joins       []string

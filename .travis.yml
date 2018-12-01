@@ -1,0 +1,15 @@
+go_import_path: github.com/gmendonca/tapper
+
+language: go
+go:
+  - 1.10.x
+  - 1.11.x
+
+os:
+  - linux
+  - osx
+
+script:
+  - go install ./...
+  - diff -u <(echo -n) <(gofmt -d .)
+  - go test -v ./...
