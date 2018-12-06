@@ -103,12 +103,12 @@ func GetQueries(dogstatsd *datadog.Dogstatsd, elasticsearch *elasticsearch.Elast
 
 					for _, join := range a.Joins {
 						tagsJoin = append(tags, "join:"+join)
-						dogstatsd.SendGauge(queryType, "query.joins", tagsJoin)
+						dogstatsd.SendGauge(queryType, "query.joins", tagsJoin, float64(1))
 					}
 
 					for _, tableName := range a.TablesNames {
 						tagsTableNames = append(tags, "tablename:"+tableName)
-						dogstatsd.SendGauge(queryType, "query.table_names", tagsTableNames)
+						dogstatsd.SendGauge(queryType, "query.table_names", tagsTableNames, float64(1))
 					}
 
 				} else if queryType == "presto" {
@@ -135,16 +135,16 @@ func GetQueries(dogstatsd *datadog.Dogstatsd, elasticsearch *elasticsearch.Elast
 
 					for _, join := range a.Joins {
 						tagsJoin = append(tags, "join:"+join)
-						dogstatsd.SendGauge(queryType, "query.joins", tagsJoin)
+						dogstatsd.SendGauge(queryType, "query.joins", tagsJoin, float64(1))
 					}
 
 					for _, tableName := range a.TablesNames {
 						tagsTableNames = append(tags, "tablename:"+tableName)
-						dogstatsd.SendGauge(queryType, "query.table_names", tagsTableNames)
+						dogstatsd.SendGauge(queryType, "query.table_names", tagsTableNames, float64(1))
 					}
 				}
 
-				dogstatsd.SendGauge(queryType, "query.point", tags)
+				dogstatsd.SendGauge(queryType, "query.point", tags, float64(1))
 				tags = []string{}
 				count++
 			}
